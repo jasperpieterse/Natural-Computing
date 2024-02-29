@@ -1,0 +1,430 @@
+<!-- Page setup and title -->
+<!DOCTYPE html>
+<html lang="en">
+<head><meta http-equiv="Content-Type" content="text/html;
+charset=UTF-8">
+<title>MoreCellsNoGrid Simulation</title>
+<style type="text/css"> 
+body{
+    font-family: "HelveticaNeue-Light", sans-serif; padding : 15px;
+}
+</style>
+
+<!-- Sourcing the cpm build -->
+<script src="artistoo/build/artistoo.js"></script>
+<script>
+"use strict"
+
+
+
+
+/*	----------------------------------
+	CONFIGURATION SETTINGS
+	----------------------------------
+*/
+
+// FOR freely and fast moving, very active cells
+let config_0 = {
+
+// Grid settings
+ndim : 2,
+field_size : [250,250],
+
+// CPM parameters and configuration
+conf : {
+    // Basic CPM parameters
+    torus : [true,true],                        // Should the grid have linked borders?
+    seed : 1,                           // Seed for random number generation.
+    T : 20,                             // CPM temperature
+    
+    // Constraint parameters. 
+    // Mostly these have the format of an array in which each element specifies the
+    // parameter value for one of the cellkinds on the grid.
+    // First value is always cellkind 0 (the background) and is often not used.
+
+    
+    // Adhesion parameters:
+    J : [ [0,20], [0,20] ],
+    
+    // VolumeConstraint parameters
+    LAMBDA_V : [0,50],             // VolumeConstraint importance per cellkind
+    V : [0,500],                    // Target volume of each cellkind
+    
+    // PerimeterConstraint parameters
+    LAMBDA_P : [0,2],              // PerimeterConstraint importance per cellkind
+    P : [0,340],                 // Target perimeter of each cellkind
+    
+    // ActivityConstraint parameters
+    LAMBDA_ACT : [0,140],           // ActivityConstraint importance per cellkind
+    MAX_ACT : [0,80],                // Activity memory duration per cellkind
+    ACT_MEAN : "geometric"              // Is neighborhood activity computed as a
+    // "geometric" or "arithmetic" mean?
+},
+
+// Simulation setup and configuration: this controls stuff like grid initialization,
+// runtime, and what the output should look like.
+simsettings : {
+
+    // Cells on the grid
+    NRCELLS : [40,0],                    // Number of cells to seed for all
+    // non-background cellkinds.
+    // Runtime etc
+    BURNIN : 50,
+    RUNTIME : 1000,
+    RUNTIME_BROWSER : "Inf",
+    
+    // Visualization
+    CANVASCOLOR : "eaecef",
+    CELLCOLOR : ["000000"],
+    ACTCOLOR : [true],          // Should pixel activity values be displayed?
+    SHOWBORDERS : [false],              // Should cellborders be displayed?
+    zoom : 2,                           // zoom in on canvas with this factor.
+    
+    // Output images
+    // SAVEIMG : true,                     // Should a png image of the grid be saved
+    // during the simulation?
+    IMGFRAMERATE : 5,                   // If so, do this every <IMGFRAMERATE> MCS.
+    SAVEPATH : "output/img/CollectiveMigration",    // ... And save the image in this folder.
+    EXPNAME : "CollectiveMigration",                    // Used for the filename of output images.
+    
+    // Output stats etc
+    STATSOUT : { browser: false, node: true }, // Should stats be computed?
+    LOGRATE : 10                            // Output stats every <LOGRATE> MCS.
+
+}
+}
+
+// FOR A SINGLE STABLE CELL — Obstacle
+let config_1 = {
+
+// Grid settings
+ndim : 2,
+field_size : [250,250],
+
+// CPM parameters and configuration
+conf : {
+    // Basic CPM parameters
+    torus : [true,true],                        // Should the grid have linked borders?
+    seed : 1,                           // Seed for random number generation.
+    T : 20,                             // CPM temperature
+    
+    // Constraint parameters. 
+    // Mostly these have the format of an array in which each element specifies the
+    // parameter value for one of the cellkinds on the grid.
+    // First value is always cellkind 0 (the background) and is often not used.
+
+    
+    // Adhesion parameters:
+    J : [ [0,100], [0,100] ],
+    
+    // VolumeConstraint parameters
+    LAMBDA_V : [0,100],             // VolumeConstraint importance per cellkind
+    V : [0,314],                    // Target volume of each cellkind
+    
+    // PerimeterConstraint parameters
+    LAMBDA_P : [0,10],              // PerimeterConstraint importance per cellkind
+    P : [0,63],                 // Target perimeter of each cellkind
+    
+    // ActivityConstraint parameters
+    LAMBDA_ACT : [0,140],           // ActivityConstraint importance per cellkind
+    MAX_ACT : [0,0],                // Activity memory duration per cellkind
+    ACT_MEAN : "geometric"              // Is neighborhood activity computed as a
+    // "geometric" or "arithmetic" mean?
+},
+
+// Simulation setup and configuration: this controls stuff like grid initialization,
+// runtime, and what the output should look like.
+simsettings : {
+
+    // Cells on the grid
+    NRCELLS : [1,0],                    // Number of cells to seed for all
+    // non-background cellkinds.
+    // Runtime etc
+    BURNIN : 50,
+    RUNTIME : 1000,
+    RUNTIME_BROWSER : "Inf",
+    
+    // Visualization
+    CANVASCOLOR : "eaecef",
+    CELLCOLOR : ["000000"],
+    ACTCOLOR : [true],          // Should pixel activity values be displayed?
+    SHOWBORDERS : [false],              // Should cellborders be displayed?
+    zoom : 2,                           // zoom in on canvas with this factor.
+    
+    // Output images
+    // SAVEIMG : true,                     // Should a png image of the grid be saved
+    // during the simulation?
+    IMGFRAMERATE : 5,                   // If so, do this every <IMGFRAMERATE> MCS.
+    SAVEPATH : "output/img/CollectiveMigration",    // ... And save the image in this folder.
+    EXPNAME : "CollectiveMigration",                    // Used for the filename of output images.
+    
+    // Output stats etc
+    STATSOUT : { browser: false, node: true }, // Should stats be computed?
+    LOGRATE : 10                            // Output stats every <LOGRATE> MCS.
+
+}
+}
+
+// Combining the moving cells and the obstacles. 
+let config_2 = {
+
+// Grid settings
+ndim : 2,
+field_size : [250,250],
+
+// CPM parameters and configuration
+conf : {
+    // Basic CPM parameters
+    torus : [true,true],						// Should the grid have linked borders?
+    seed : 1,							// Seed for random number generation.
+    T : 20,								// CPM temperature
+    
+    // Constraint parameters. 
+    // Mostly these have the format of an array in which each element specifies the
+    // parameter value for one of the cellkinds on the grid.
+    // First value is always cellkind 0 (the background) and is often not used.
+
+    
+    // Adhesion parameters:
+    // J : [ [0,20], [20,0] ],
+    J : [ [0,20,20], 
+			[20,20,100], // epidermal cells
+			[20,100,200] ],
+    
+    // VolumeConstraint parameters
+    LAMBDA_V : [0,50,3],				// VolumeConstraint importance per cellkind
+    V : [0,500,314],					// Target volume of each cellkind
+    
+    // PerimeterConstraint parameters
+    LAMBDA_P : [0,2, 10],				// PerimeterConstraint importance per cellkind
+    P : [0,340, 63],					// Target perimeter of each cellkind
+    
+    // ActivityConstraint parameters
+    LAMBDA_ACT : [0,200,200],			// ActivityConstraint importance per cellkind
+    MAX_ACT : [0,80, 0],				// Activity memory duration per cellkind
+    ACT_MEAN : "geometric"				// Is neighborhood activity computed as a
+    // "geometric" or "arithmetic" mean?
+},
+
+// Simulation setup and configuration: this controls stuff like grid initialization,
+// runtime, and what the output should look like.
+simsettings : {
+
+    // Cells on the grid
+    NRCELLS : [10,5],					// Number of cells to seed for all
+    // non-background cellkinds.
+    // Runtime etc
+    BURNIN : 50,
+    RUNTIME : 1000,
+    RUNTIME_BROWSER : "Inf",
+    
+    // Visualization
+    CANVASCOLOR : "eaecef",
+    CELLCOLOR : ["000000", "AAAAAA"],
+    ACTCOLOR : [true],			// Should pixel activity values be displayed?
+    SHOWBORDERS : [false],				// Should cellborders be displayed?
+    zoom : 2,							// zoom in on canvas with this factor.
+    
+    // Output images
+    // SAVEIMG : true,						// Should a png image of the grid be saved
+    // during the simulation?
+    IMGFRAMERATE : 5,					// If so, do this every <IMGFRAMERATE> MCS.
+    SAVEPATH : "output/img/CollectiveMigration",	// ... And save the image in this folder.
+    EXPNAME : "CollectiveMigration",					// Used for the filename of output images.
+    
+    // Output stats etc
+    STATSOUT : { browser: false, node: true }, // Should stats be computed?
+    LOGRATE : 10							// Output stats every <LOGRATE> MCS.
+
+}
+}
+
+
+// Combining the moving cells and the obstacles. 
+let config_3 = {
+
+// Grid settings
+ndim : 2,
+field_size : [250,250],
+
+// CPM parameters and configuration
+conf : {
+    // Basic CPM parameters
+    torus : [true,true],						// Should the grid have linked borders?
+    seed : 1,							// Seed for random number generation.
+    T : 20,								// CPM temperature
+    
+    // Constraint parameters. 
+    // Mostly these have the format of an array in which each element specifies the
+    // parameter value for one of the cellkinds on the grid.
+    // First value is always cellkind 0 (the background) and is often not used.
+
+    
+    // Adhesion parameters:
+    // J : [ [0,20], [20,0] ],
+    J : [ [0,20,20], 
+			[20,20,100], // epidermal cells
+			[20,100,200] ],
+    
+    // VolumeConstraint parameters
+    LAMBDA_V : [0,50,20],				// VolumeConstraint importance per cellkind
+    V : [0,500,180],					// Target volume of each cellkind
+    
+    // PerimeterConstraint parameters
+    LAMBDA_P : [0,2, 10],				// PerimeterConstraint importance per cellkind
+    P : [0,340, 63],					// Target perimeter of each cellkind
+    
+    // ActivityConstraint parameters
+    LAMBDA_ACT : [0,200, 200],			// ActivityConstraint importance per cellkind
+    MAX_ACT : [0,80, 0],				// Activity memory duration per cellkind
+    ACT_MEAN : "geometric"				// Is neighborhood activity computed as a
+    // "geometric" or "arithmetic" mean?
+},
+
+// Simulation setup and configuration: this controls stuff like grid initialization,
+// runtime, and what the output should look like.
+simsettings : {
+
+    // Cells on the grid
+    NRCELLS : [10,50],					// Number of cells to seed for all
+    // non-background cellkinds.
+    // Runtime etc
+    BURNIN : 50,
+    RUNTIME : 1000,
+    RUNTIME_BROWSER : "Inf",
+    
+    // Visualization
+    CANVASCOLOR : "eaecef",
+    CELLCOLOR : ["000000", "AAAAAA"],
+    ACTCOLOR : [true],			// Should pixel activity values be displayed?
+    SHOWBORDERS : [false],				// Should cellborders be displayed?
+    zoom : 2,							// zoom in on canvas with this factor.
+    
+    // Output images
+    // SAVEIMG : true,						// Should a png image of the grid be saved
+    // during the simulation?
+    IMGFRAMERATE : 5,					// If so, do this every <IMGFRAMERATE> MCS.
+    SAVEPATH : "output/img/CollectiveMigration",	// ... And save the image in this folder.
+    EXPNAME : "CollectiveMigration",					// Used for the filename of output images.
+    
+    // Output stats etc
+    STATSOUT : { browser: false, node: true }, // Should stats be computed?
+    LOGRATE : 10							// Output stats every <LOGRATE> MCS.
+
+}
+}
+
+
+	
+function initializeGrid(gridSpacing, fixedSeedCellCount) {
+	// add the initializer if not already there
+	if( !this.helpClasses["gm"] ){ this.addGridManipulator() }
+
+    // Seed grid of obstacles cells with specified spacing
+    let restrictedPositions = []; 
+    for (let i = 0; i < this.C.extents[0]; i += gridSpacing) {
+        for (let j = 0 ; j < this.C.extents[1] ; j += gridSpacing ){
+            this.gm.seedCellAt(2, [i, j]);
+
+            // Add restricted positions within a 5-pixel radius
+            for (let dx = -10; dx <= 10; dx++) {
+                for (let dy = -10; dy <= 10; dy++) {
+                    // Check for distance within the radius
+                    if (dx * dx + dy * dy <= 10 * 10) {
+                        let x = i + dx;
+                        let y = j + dy;
+
+                        // Ensure position is within grid bounds
+                        if (x >= 0 && x < this.C.extents[0] && y >= 0 && y < this.C.extents[1]) {
+                            restrictedPositions.push([x, y]);
+                        }                        
+                    }
+                }
+            }
+        }
+    }
+
+    // Seed a fixed number of seedCell(1) instances 
+    for (let k = 0; k < fixedSeedCellCount; k++) {
+        let validPositionFound = false;
+
+        while (!validPositionFound) { 
+            let x = Math.floor(Math.random() * this.C.extents[0]);
+            let y = Math.floor(Math.random() * this.C.extents[1]);
+
+            if (!restrictedPositions.some(pos => pos[0] === x && pos[1] === y)) {
+                this.gm.seedCellAt(1, [x, y]);
+                validPositionFound = true;
+            }
+        }
+    }
+}
+
+
+let sim_0, sim_1, sim_2, sim_3;
+
+
+function initialize(){
+    let custommethods1 = {        // Wrap the call to initializeGrid with a function that provides the desired parameters
+        initializeGrid: function() {
+            initializeGrid.call(this, 5000, 40); // Example: gridSpacing=50, seedCellCount=20
+        },
+    };
+
+    let custommethods2 = {
+        // Wrap the call to initializeGrid with a function that provides the desired parameters
+        initializeGrid: function() {
+            initializeGrid.call(this, 5000, 80); // Example: gridSpacing=50, seedCellCount=40
+        },
+    };
+
+    let custommethods3 = {
+        // Wrap the call to initializeGrid with a function that provides the desired parameters
+        initializeGrid: function() {
+            initializeGrid.call(this, 50000, 120); // Example: gridSpacing=50, seedCellCount=60
+        },
+    };
+    sim_0 = new CPM.Simulation(config_2, custommethods1);
+    sim_1 = new CPM.Simulation(config_2, custommethods2);
+    sim_2 = new CPM.Simulation(config_2, custommethods3);
+
+    // Assuming 'step' is a function that starts or steps through the simulation
+    step();
+}
+
+
+
+// Variables to track Monte Carlo steps
+let mcSteps = 0; 
+
+function step(){
+    sim_0.step();
+    
+    sim_1.step();
+
+    sim_2.step();
+
+    mcSteps++; // Increment counter for simulation 0
+
+    // Update display
+    document.getElementById("mc-counter").innerHTML = 
+       "MCMC Steps: " + mcSteps;
+
+    requestAnimationFrame( step );
+}
+
+
+
+</script>
+</head>
+<body onload="initialize()">
+<div id="mc-counter" style="position:absolute; top:10px; right:10px;"></div>
+
+<h1>Implementing the CMP simulations</h1>
+<p>
+The first image has 40 cells. <br>
+The second has 80 cells. <br>
+The third has 120 cells. <br>
+</p>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <html lang="en">
 <head><meta http-equiv="Content-Type" content="text/html;
 charset=UTF-8">
-<title>CPM Simulation</title>
+<title>CPM_simulation</title>
 <style type="text/css"> 
 body{
     font-family: "HelveticaNeue-Light", sans-serif; padding : 15px;
@@ -42,8 +42,7 @@ conf : {
 
     
     // Adhesion parameters:
-    J : [ [0,0], 
-          [0,20] ],
+    J : [ [0,20], [0,20] ],
     
     // VolumeConstraint parameters
     LAMBDA_V : [0,50],             // VolumeConstraint importance per cellkind
@@ -65,7 +64,7 @@ conf : {
 simsettings : {
 
     // Cells on the grid
-    NRCELLS : [15],                    // Number of cells to seed for all
+    NRCELLS : [40,0],                    // Number of cells to seed for all
     // non-background cellkinds.
     // Runtime etc
     BURNIN : 50,
@@ -80,7 +79,7 @@ simsettings : {
     zoom : 2,                           // zoom in on canvas with this factor.
     
     // Output images
-    SAVEIMG : true,                     // Should a png image of the grid be saved
+    // SAVEIMG : true,                     // Should a png image of the grid be saved
     // during the simulation?
     IMGFRAMERATE : 5,                   // If so, do this every <IMGFRAMERATE> MCS.
     SAVEPATH : "output/img/CollectiveMigration",    // ... And save the image in this folder.
@@ -121,11 +120,11 @@ conf : {
     V : [0,314],                    // Target volume of each cellkind
     
     // PerimeterConstraint parameters
-    LAMBDA_P : [0,100],              // PerimeterConstraint importance per cellkind
-    P : [0,100],                 // Target perimeter of each cellkind
+    LAMBDA_P : [0,10],              // PerimeterConstraint importance per cellkind
+    P : [0,63],                 // Target perimeter of each cellkind
     
     // ActivityConstraint parameters
-    LAMBDA_ACT : [0,0],           // ActivityConstraint importance per cellkind
+    LAMBDA_ACT : [0,140],           // ActivityConstraint importance per cellkind
     MAX_ACT : [0,0],                // Activity memory duration per cellkind
     ACT_MEAN : "geometric"              // Is neighborhood activity computed as a
     // "geometric" or "arithmetic" mean?
@@ -151,7 +150,7 @@ simsettings : {
     zoom : 2,                           // zoom in on canvas with this factor.
     
     // Output images
-    SAVEIMG : true,                     // Should a png image of the grid be saved
+    // SAVEIMG : true,                     // Should a png image of the grid be saved
     // during the simulation?
     IMGFRAMERATE : 5,                   // If so, do this every <IMGFRAMERATE> MCS.
     SAVEPATH : "output/img/CollectiveMigration",    // ... And save the image in this folder.
@@ -186,12 +185,12 @@ conf : {
     
     // Adhesion parameters:
     // J : [ [0,20], [20,0] ],
-    J : [   [0, 0, 0], 
-			[0,20, 0], 
-			[0,0, 200] ],
+    J : [ [0,20,20], 
+			[20,20,100], // epidermal cells
+			[20,100,200] ],
     
     // VolumeConstraint parameters
-    LAMBDA_V : [0,50,100],				// VolumeConstraint importance per cellkind
+    LAMBDA_V : [0,50,3],				// VolumeConstraint importance per cellkind
     V : [0,500,314],					// Target volume of each cellkind
     
     // PerimeterConstraint parameters
@@ -199,7 +198,7 @@ conf : {
     P : [0,340, 63],					// Target perimeter of each cellkind
     
     // ActivityConstraint parameters
-    LAMBDA_ACT : [0,140, 0],			// ActivityConstraint importance per cellkind
+    LAMBDA_ACT : [0,200,200],			// ActivityConstraint importance per cellkind
     MAX_ACT : [0,80, 0],				// Activity memory duration per cellkind
     ACT_MEAN : "geometric"				// Is neighborhood activity computed as a
     // "geometric" or "arithmetic" mean?
@@ -225,7 +224,7 @@ simsettings : {
     zoom : 2,							// zoom in on canvas with this factor.
     
     // Output images
-    SAVEIMG : true,						// Should a png image of the grid be saved
+    // SAVEIMG : true,						// Should a png image of the grid be saved
     // during the simulation?
     IMGFRAMERATE : 5,					// If so, do this every <IMGFRAMERATE> MCS.
     SAVEPATH : "output/img/CollectiveMigration",	// ... And save the image in this folder.
@@ -261,19 +260,20 @@ conf : {
     
     // Adhesion parameters:
     // J : [ [0,20], [20,0] ],
-    J : [   [0, 0, 0], 
-			[0,20, 0], 
-			[0,0, 200] ],
+    J : [ [0,20,20], 
+			[20,20,100], // epidermal cells
+			[20,100,200] ],
+    
     // VolumeConstraint parameters
-    LAMBDA_V : [0,50,100],				// VolumeConstraint importance per cellkind
-    V : [0,500,314],					// Target volume of each cellkind
+    LAMBDA_V : [0,50,20],				// VolumeConstraint importance per cellkind
+    V : [0,500,180],					// Target volume of each cellkind
     
     // PerimeterConstraint parameters
     LAMBDA_P : [0,2, 10],				// PerimeterConstraint importance per cellkind
     P : [0,340, 63],					// Target perimeter of each cellkind
     
     // ActivityConstraint parameters
-    LAMBDA_ACT : [0,140, 0],			// ActivityConstraint importance per cellkind
+    LAMBDA_ACT : [0,200, 200],			// ActivityConstraint importance per cellkind
     MAX_ACT : [0,80, 0],				// Activity memory duration per cellkind
     ACT_MEAN : "geometric"				// Is neighborhood activity computed as a
     // "geometric" or "arithmetic" mean?
@@ -299,7 +299,7 @@ simsettings : {
     zoom : 2,							// zoom in on canvas with this factor.
     
     // Output images
-    SAVEIMG : true,						// Should a png image of the grid be saved
+    // SAVEIMG : true,						// Should a png image of the grid be saved
     // during the simulation?
     IMGFRAMERATE : 5,					// If so, do this every <IMGFRAMERATE> MCS.
     SAVEPATH : "output/img/CollectiveMigration",	// ... And save the image in this folder.
@@ -313,24 +313,47 @@ simsettings : {
 }
 
 
-function initializeGrid(gridSpacing, fixedSeedCellCount){
-	
+function initializeGrid(gridSpacing, fixedSeedCellCount) {
 	// add the initializer if not already there
 	if( !this.helpClasses["gm"] ){ this.addGridManipulator() }
-	
-	// Seed grid of obstacles cells with specified spacing
-	for( let i = 0 ; i < this.C.extents[0] ; i += gridSpacing ){
-		for( let j = 0 ; j < this.C.extents[1] ; j += gridSpacing ){
-			this.gm.seedCellAt(2, [i,j]);
-		}
-	}
 
-    // Seed a fixed number of seedCell(1) instances independent of the grid size or spacing
+    // Seed grid of obstacles cells with specified spacing
+    let restrictedPositions = []; 
+    for (let i = 0; i < this.C.extents[0]; i += gridSpacing) {
+        for (let j = 0 ; j < this.C.extents[1] ; j += gridSpacing ){
+            this.gm.seedCellAt(2, [i, j]);
+
+            // Add restricted positions within a 5-pixel radius
+            for (let dx = -10; dx <= 10; dx++) {
+                for (let dy = -10; dy <= 10; dy++) {
+                    // Check for distance within the radius
+                    if (dx * dx + dy * dy <= 10 * 10) {
+                        let x = i + dx;
+                        let y = j + dy;
+
+                        // Ensure position is within grid bounds
+                        if (x >= 0 && x < this.C.extents[0] && y >= 0 && y < this.C.extents[1]) {
+                            restrictedPositions.push([x, y]);
+                        }                        
+                    }
+                }
+            }
+        }
+    }
+
+    // Seed a fixed number of seedCell(1) instances 
     for (let k = 0; k < fixedSeedCellCount; k++) {
-        // Distribute these cells randomly across the grid
-        let x = Math.floor(Math.random() * this.C.extents[0]);
-        let y = Math.floor(Math.random() * this.C.extents[1]);
-        this.gm.seedCellAt(1, [x, y]);
+        let validPositionFound = false;
+
+        while (!validPositionFound) { 
+            let x = Math.floor(Math.random() * this.C.extents[0]);
+            let y = Math.floor(Math.random() * this.C.extents[1]);
+
+            if (!restrictedPositions.some(pos => pos[0] === x && pos[1] === y)) {
+                this.gm.seedCellAt(1, [x, y]);
+                validPositionFound = true;
+            }
+        }
     }
 }
 
@@ -344,14 +367,14 @@ function initialize(){
     let custommethods2 = {
         // Wrap the call to initializeGrid with a function that provides the desired parameters
         initializeGrid: function() {
-            initializeGrid.call(this, 50, 15); // Example: gridSpacing=50, seedCellCount=15
+            initializeGrid.call(this, 50, 40); // Example: gridSpacing=50, seedCellCount=15
         },
     };
 
     let custommethods3 = {
         // Wrap the call to initializeGrid with a function that provides the desired parameters
         initializeGrid: function() {
-            initializeGrid.call(this, 30,15); // Example: gridSpacing=30, seedCellCount=15
+            initializeGrid.call(this, 30, 40); // Example: gridSpacing=30, seedCellCount=15
         },
     };
     sim_0 = new CPM.Simulation(config_0, custommethods1);
@@ -363,25 +386,37 @@ function initialize(){
     step();
 }
 
+// Variables to track Monte Carlo steps
+let mcSteps = 0; 
 
 function step(){
     sim_0.step();
+    
     sim_1.step();
+
     sim_2.step();
-    sim_3.step();
+
+    mcSteps++; // Increment counter for simulation 0
+
+    // Update display
+    document.getElementById("mc-counter").innerHTML = 
+       "MCMC Steps: " + mcSteps;
+
     requestAnimationFrame( step );
 }
+
 
 
 </script>
 </head>
 <body onload="initialize()">
+<div id="mc-counter" style="position:absolute; top:10px; right:10px;"></div>
+
 <h1>Implementing the CMP simulations</h1>
 <p>
-The first image replicates the CMP from 1.3 with Max_act = 80 -- a large part of the cell is active for movement. <br>
-The second example just represents and example of an obstacle. <br>
-The third CMP combines freely moving cells and 5 obstacles. <br>
-The fourth CMP combines freely moving cells and 20 obstacles. <br>
+The first image has 40 cells. <br>
+The second has 80 cells. <br>
+The third has 120 cells. <br>
 </p>
 </body>
 </html>
