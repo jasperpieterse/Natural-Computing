@@ -5,43 +5,25 @@ const output = []; // Store output data
 
 //Boid simulation parameters
 let speed = 4;
-let numBoids = 15; // Number of boids in the simulation
+let numBoids = 50; // Number of boids in the simulation
 let fieldSize = 600; // Size of the simulation field
 let numSteps = 300; // Number of simulation steps
-
-// Boid behavior parameters
-let cohesionStrength = 100;
-let separationStrength = 20;
-let alignmentStrength = 1; 
-let interactionRadius = 100;
 
 // ABC parameters
 const numIterations = 10; // Number of ABC iterations
 const acceptedPopulationSize = 20; // Number of accepted parameters to store
-const distanceThreshold = 0.05; // Adjust based on your distance function
+const distanceThreshold = 0.1; // Adjust based on your distance function
 
 // ABC priors
-let cohesionPrior = [80, 120]; // Range for cohesion parameter
-let separationPrior = [10, 50];   // Range for separation parameter
-let alignmentPrior = [0.5, 1.5];  // Range for alignment parameter
-
-// ABC perturbation standard deviations 
-let stdDev_coh = 5; // Standard deviation for cohesion
-let stdDev_sep = 2; // Standard deviation for separation
-let stdDev_align = 0.1; // Standard deviation for alignment
-
+let cohesionPrior = [0.5, 2.0]; // Example prior for cohesion (min, max)
+let alignmentPrior = [0.1, 1.5];  // Example prior for alignment
+let separationPrior = [10, 50];   // Example prior for separation
 
 // Initialize arrays for simulation
 let orderParameter = []; // Array to store order parameter over time
 let neighborDistances = []; // Array to store nearest-neighbor distances over time
 let acceptedParameters = []; // Store accepted parameters
 let timeStep = 0;
-
-// Initialize ABC
-let isAbcRunning = false; // Flag to indicate if ABC is active
-let currentIteration = 0; // Current ABC iteration counter
-let bestDistance = Infinity; // Initialize with a large distance
-
 
 let Scene = {
     w: fieldSize,    // Width of the simulation area
@@ -83,6 +65,12 @@ class Particle {
 	}
 
 	step(){
+		// Parameters
+		let cohesionStrength = 100;
+		let separationStrength = 20;
+		let alignmentStrength = 1; // Add this
+		let interactionRadius = 100; // Add this
+
     //List of positions of all neighbours (within radius of interactionRadius)
     let N = Scene.neighbours( this.pos, interactionRadius ), 
         //together average dir
@@ -205,140 +193,58 @@ function calculateDistance(targetOrderParameter, simulatedOrderParameter) {
     return Math.abs(targetOrderParameter - simulatedOrderParameter);
   }
 
-
 function perturbParameters(parameters) {
-    let perturbedParameters = parameters.slice();  // Make a copy
+let perturbedParameters = parameters.slice();  // Make a copy
 
-    perturbedParameters[0] += randomGaussian(0, stdDev_coh); // Perturb cohesion
-    perturbedParameters[1] += randomGaussian(0, stdDev_align); // Perturb alignment
-    perturbedParameters[2] += randomGaussian(0, stdDev_sep); // Perturb separation
+// Adjust standard deviation as needed
+const stdDev = 5; 
 
-    return perturbedParameters;
+perturbedParameters[0] += randomGaussian(0, stdDev); // Perturb cohesion
+perturbedParameters[1] += randomGaussian(0, stdDev); // Perturb alignment
+perturbedParameters[2] += randomGaussian(0, stdDev); // Perturb separation
+
+return perturbedParameters;
 }
 
 function runABC() {
-    isAbcRunning = true; // Start ABC
-
     let currentPriors = [cohesionPrior, alignmentPrior, separationPrior];
-    console.log("Starting ABC with priors:", currentPriors);
-    let acceptedParameters = []; // Store accepted parameters outside of the fucking loop because Javascript is fucking worthless
-
-    // Generate candidate parameters
+  
     for (let iteration = 0; iteration < numIterations; iteration++) {
-        currentIteration = iteration;  // Update current iteration flag for visualization
-        acceptedParameters = []; // Reset for each iteration
-
-        attempts = 0 
-        while (acceptedParameters.length < acceptedPopulationSize) {
-            attempts++
-            let sampledParameters = sampleFromPriors(currentPriors); 
-            runBoidSimulation(sampledParameters); 
-            let orderParameter = calculateOrderParameter();
-            let distance = calculateDistance(1, orderParameter); // Target = 1
-
-            // console.log("Parameters:", sampledParameters);
-            // console.log("Distance:", distance);
-
-            // Update best distance if needed
-            if (distance < bestDistance) {
-                bestDistance = distance;
-            }
-
-            if (distance <= distanceThreshold) {
-                acceptedParameters.push(sampledParameters);
-                // console.log("Accepted Parameters:", sampledParameters);
-            }
-        } 
-
-        // Update priors based on for next iteration
-        currentPriors = updatePriors(acceptedParameters); 
-        console.log("Finished ABC Iteration:", iteration);
-        console.log("within this amount of attempts:", attempts)
-        console.log("Updated Priors:", currentPriors);
+      let candidateParameters = [];
+      let acceptedParameters = [];
+  
+      // Generate candidate parameters
+      for (let i = 0; i < acceptedPopulationSize * 5; i++) { // Generate  ample candidates
+        let sampledParameters = sampleFromPriors(currentPriors); 
+        candidateParameters.push(sampledParameters);
+      }
+  
+      // Evaluate candidates and accept parameters
+      for (let parameters of candidateParameters) {
+        runBoidSimulation(parameters); // Update your simulation function
+        let orderParameter = calculateOrderParameter();
+        let distance = calculateDistance(1, orderParameter); // Target = 1
+  
+        if (distance <= distanceThreshold) {
+          acceptedParameters.push(parameters);
+        }
+      }
+  
+      // Check if we have enough accepted parameters
+      if (acceptedParameters.length >= acceptedPopulationSize) {
+        updatePriors(acceptedParameters);
+        break; // Stop if we have converged enough
+      }
+  
+      // Update priors for next iteration
+      currentPriors = updatePriors(acceptedParameters); 
     }
   
     // Analyze results in accepted parameters, potentially save them
     console.log("Final Accepted Parameters:", acceptedParameters);
-    isAbcRunning = false; // ABC process finished
-  }
-
-  
-function sampleFromPriors(priors) {
-    let sampledParameters = [];
-  
-    // Sample from each prior distribution
-    for (let prior of priors) {
-      let min = prior[0];
-      let max = prior[1];
-      let sampledValue = random(min, max); 
-      sampledParameters.push(sampledValue);
-    }
-  
-    return sampledParameters;
   }
   
 
-function updatePriors(acceptedParameters) {
-    let newPriors = [];
-  
-    // Update priors for each parameter
-    for (let i = 0; i < acceptedParameters[0].length; i++) {
-      let parameterValues = acceptedParameters.map(params => params[i]);
-  
-      // Calculate new mean and standard deviation
-      let newMean = calculateMean(parameterValues);
-      let newStdDev = calculateStandardDeviation(parameterValues);
-  
-      // Avoid standard deviations that are too small
-      if (newStdDev < 0.1) { 
-        newStdDev = 0.1; 
-      }
-  
-      newPriors.push([newMean - newStdDev, newMean + newStdDev]); 
-    }
-  
-    return newPriors;
-  }
-function calculateMean(values) {
-    const sum = values.reduce((accumulator, current) => accumulator + current, 0);
-    return sum / values.length;
-  }
-  
-  function calculateStandardDeviation(values) {
-    const mean = calculateMean(values);
-    const squaredDeviations = values.map(value => (value - mean) ** 2); 
-    const variance = squaredDeviations.reduce((sum, dev) => sum + dev, 0) / values.length;
-  
-    return Math.sqrt(variance);
-  }
-  
-  
-function runBoidSimulation(parameters) {
-    // Reset scene and swarm for a new simulation run
-    initScene(); 
-    initSwarm(); 
-  
-    // Unpack parameters
-    const [cohesionStrength, alignmentStrength, separationStrength] = parameters; 
-  
-    // Main simulation loop 
-    for (let i = 0; i < numSteps; i++) {
-      for (let p of Scene.swarm) {
-        // Update Boid parameters with provided values
-        p.cohesionStrength = cohesionStrength;  // Update if you have a matching property in "Particle"
-        p.alignmentStrength = alignmentStrength;
-        p.separationStrength = separationStrength;
-  
-        p.step();
-        p.wrap();  
-        p.draw();
-      }
-    }
-  
-    // Calculate order parameter at the end of the simulation
-    return calculateOrderParameter();
-  }
-  
 
 function initScene() {
     Scene = {
@@ -366,19 +272,21 @@ function initSwarm() {
     }
 }
 
+let shouldUpdateSimulation = true; // Flag to trigger new simulation
 
 function setup() {
     createCanvas(fieldSize, fieldSize); 
     initScene(); // Initialize your scene
     initSwarm(); // Initialize the initial swarm
-
-    // Create a button for triggering ABC
-    let abcButton = createButton('Run ABC');
-    abcButton.mousePressed(runABC); 
 }
 
 function draw() {
     background(220); // Clear the background
+
+    // if (shouldUpdateSimulation) { 
+    //     RunSimulation();  // Trigger a new ABC simulation run
+    //     shouldUpdateSimulation = true; 
+    // }
 
     // Calculate metrics each frame, even if simulation is not running
     const currentOrderParameter = calculateOrderParameter(); 
@@ -386,20 +294,6 @@ function draw() {
 
     displaySimulation(); // Update and display the boids
     displayParameters(currentOrderParameter, currentNeighborDistances); 
-
-    
-    // Visualization of ABC progress
-    if (isAbcRunning) { // Display ABC progress if ABC is running
-        textSize(14);
-
-        // Textual display
-        text(`ABC Iteration: ${currentIteration}`, 10, height - 60);
-        text(`Best Distance: ${bestDistance.toFixed(2)}`, 10, height - 40);
-
-        // Simple chart for cohesion parameter
-        stroke(0, 0, 255); // Blue for cohesion
-        line(50, height - 30, 50 + currentIteration * 5, height - 30 - acceptedParameters[currentIteration][0] * 20);
-    }
 }
 
 function displaySimulation() {
@@ -412,6 +306,7 @@ function displaySimulation() {
 }
 
 function displayParameters(orderParam, neighborDist) {
+    // Create text display area (adjust CSS as needed)
     textSize(16);
     text(`Order Parameter: ${orderParam.toFixed(2)}`, 10, 20);
     text(`Avg. Neighbor Distance: ${neighborDist.toFixed(2)}`, 10, 40);
