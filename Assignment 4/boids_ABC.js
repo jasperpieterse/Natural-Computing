@@ -27,14 +27,13 @@ let alignmentPrior = [0.1, 3];  // Range for alignment parameter
 let separationPrior = [10, 80];   // Range for separation parameter
 
 // ABC perturbation standard deviations 
-let stdDev_coh = 5; // Standard deviation for cohesion
-let stdDev_sep = 2; // Standard deviation for separation
-let stdDev_align = 0.1; // Standard deviation for alignment
+let stdDev_coh = 2.5; // Standard deviation for cohesion
+let stdDev_sep = 1; // Standard deviation for separation
+let stdDev_align = 0.05; // Standard deviation for alignment
 
 // Initialize arrays for simulation
-let orderParameter = []; // Array to store order parameter over time
+const orderParameterValues = [];
 let neighborDistances = []; // Array to store nearest-neighbor distances over time
-let acceptedParameters = []; // Store accepted parameters
 let timeStep = 0;
 
 // Initialize ABC
@@ -246,6 +245,7 @@ function runABC() {
 
             if (distance <= distanceThreshold) {
                 acceptedParameters.push(sampledParameters);
+                orderParameterValues.push(calculateOrderParameter());
                 // console.log("Accepted Parameters:", sampledParameters);
             }
         } 
@@ -254,10 +254,13 @@ function runABC() {
         currentPriors = updatePriors(acceptedParameters); 
         console.log("Finished ABC Iteration:", iteration);
         console.log("within this amount of attempts:", attempts)
-        console.log("Updated Priors:", currentPriors);
+        console.log("with the following accepted parameters:", acceptedParameters)
+        console.log("using which we updated the Priors:", currentPriors);
     }
   
     // Analyze results in accepted parameters, potentially save them
+    console.log("ABC finished!");
+    console.log("Final priors:", currentPriors);
     console.log("Final Accepted Parameters:", acceptedParameters);
     isAbcRunning = false; // ABC process finished
 
@@ -290,13 +293,9 @@ function updatePriors(acceptedParameters) {
       // Calculate new mean and standard deviation
       let newMean = calculateMean(parameterValues);
       let newStdDev = calculateStandardDeviation(parameterValues);
+
   
-      // Avoid standard deviations that are too small
-      if (newStdDev < 0.1) { 
-        newStdDev = 0.1; 
-      }
-  
-      newPriors.push([newMean - 3 * newStdDev, newMean + 3* newStdDev]); 
+      newPriors.push([newMean - newStdDev, newMean + newStdDev]); 
     }
   
     return newPriors;
