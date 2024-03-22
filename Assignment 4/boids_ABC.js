@@ -4,32 +4,32 @@ const output = []; // Store output data
 // PARAMETERS
 
 //Boid simulation parameters
-let speed = 4;
+let speed = 0.3;
 let numBoids = 15; // Number of boids in the simulation
-let fieldSize = 600; // Size of the simulation field
+let fieldSize = 165; // Size of the simulation field
 let numSteps = 300; // Number of simulation steps
 
 // Boid behavior parameters
 let cohesionStrength = 100;
 let separationStrength = 20;
 let alignmentStrength = 1; 
-let interactionRadius = 100;
+let interactionRadius = 28;
+let exclusionRadius = 6;
 
 // ABC parameters
 const numIterations = 10; // Number of ABC iterations
 const acceptedPopulationSize = 20; // Number of accepted parameters to store
-const distanceThreshold = 0.05; // Adjust based on your distance function
+const distanceThreshold = 0.01; // Adjust based on your distance function
 
 // ABC priors
-let cohesionPrior = [80, 120]; // Range for cohesion parameter
-let separationPrior = [10, 50];   // Range for separation parameter
-let alignmentPrior = [0.5, 1.5];  // Range for alignment parameter
+let cohesionPrior = [40, 160]; // Range for cohesion parameter
+let alignmentPrior = [0.1, 3];  // Range for alignment parameter
+let separationPrior = [10, 80];   // Range for separation parameter
 
 // ABC perturbation standard deviations 
 let stdDev_coh = 5; // Standard deviation for cohesion
 let stdDev_sep = 2; // Standard deviation for separation
 let stdDev_align = 0.1; // Standard deviation for alignment
-
 
 // Initialize arrays for simulation
 let orderParameter = []; // Array to store order parameter over time
@@ -114,7 +114,6 @@ class Particle {
 		this.dir.add(alignmentVector); // Add alignment to the direction calculation
 
 		// Exclusion behavior
-		let exclusionRadius = 20; // Adjust the radius value as needed
 		let exclusionVector = createVector(0, 0);
 	
 		for (let n of N) {
@@ -230,8 +229,9 @@ function runABC() {
 
         attempts = 0 
         while (acceptedParameters.length < acceptedPopulationSize) {
-            attempts++
-            let sampledParameters = sampleFromPriors(currentPriors); 
+            attempts++ // increment attempt counter
+            let sampledFromPriors = sampleFromPriors(currentPriors);  // Sample some parameters from our prior
+            let sampledParameters = perturbParameters(sampledFromPriors)  // Perturb them using Gaussian noise
             runBoidSimulation(sampledParameters); 
             let orderParameter = calculateOrderParameter();
             let distance = calculateDistance(1, orderParameter); // Target = 1
@@ -260,6 +260,8 @@ function runABC() {
     // Analyze results in accepted parameters, potentially save them
     console.log("Final Accepted Parameters:", acceptedParameters);
     isAbcRunning = false; // ABC process finished
+
+    
   }
 
   
@@ -294,7 +296,7 @@ function updatePriors(acceptedParameters) {
         newStdDev = 0.1; 
       }
   
-      newPriors.push([newMean - newStdDev, newMean + newStdDev]); 
+      newPriors.push([newMean - 3 * newStdDev, newMean + 3* newStdDev]); 
     }
   
     return newPriors;
